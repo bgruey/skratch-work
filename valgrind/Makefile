@@ -9,11 +9,11 @@ default: test
 
 test: build
 >	LD_LIBRARY_PATH=./lib valgrind --leak-check=full \
-         --show-leak-kinds=all \
-         --track-origins=yes \
-         --verbose \
-         --log-file=valgrind-out.txt \
-         ./puppet.x
+        --show-leak-kinds=all \
+        --verbose \
+        --log-file=valgrind-out.txt \
+        --track-origins=yes \
+        ./puppet.x
 
 run: build
 >	LD_LIBRARY_PATH=./lib ./puppet.x

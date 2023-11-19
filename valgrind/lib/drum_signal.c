@@ -27,7 +27,6 @@ DrumSignalData_t* setup_signal_data(
     ret_data->gaussian_rise_b = log(1.0 / ret_data->zero_amplitude) / ret_data->rise_duration / ret_data->rise_duration;
     ret_data->exp_fall_b = log(1.0 / ret_data->zero_amplitude) / ret_data->fall_duration;
 
-    printf("-bt^2: %.3e, -bt: %.3e", ret_data->gaussian_rise_b, ret_data->exp_fall_b);
     return ret_data;
 }
 
