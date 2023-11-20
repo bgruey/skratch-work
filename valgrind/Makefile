@@ -29,15 +29,15 @@ build: libpuppet.so libdancer.so libpinthreads.so
 libpuppet.so:
 >	$(MAKE) -C ./base_puppet
 
-libdancer.so:
+libdancer.so: libpinthreads.so
 >       $(MAKE) -C ./dancer
 
-libpinthreads.so:
+libpinthreads.so: libpuppet.so
 >       $(MAKE) -C ./pin_threads
 
 .PHONY: clean
 clean:
->	rm *.x || echo "No executable to clean."
+>	rm -f *.x
 >	$(MAKE) clean -C ./base_puppet
 >       $(MAKE) clean -C ./dancer
 >       $(MAKE) clean -C ./pin_threads

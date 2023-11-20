@@ -5,7 +5,7 @@
 #include <unistd.h>
 
 #include "dancer/dancer.h"
-#include "pin_threads/pin_reader.h"
+#include "pin_threads/pin_thread.h"
 
 #include "base_puppet/now.h"
 #include "base_puppet/move.h"
@@ -21,13 +21,6 @@ int main(int argc, char** argv) {
         "./data.csv"
     );
 
-    if (
-        launch_pin_reader_thread(
-            dancer->pin_reader_thread_data
-        )
-    )
-        exit(1);
-
     int i;
     for (i = 0; i < num_points; i++) {
         step_forward_buffer(dancer);
@@ -35,7 +28,10 @@ int main(int argc, char** argv) {
     }
 
     dancer->pin_reader_thread_data->run_bool[0] = 0;
+    dancer->pin_writer_thread_data->run_bool[0] = 0;
     pthread_join(dancer->pin_reader_thread_data->thread[0], NULL);
+    pthread_join(dancer->pin_writer_thread_data->thread[0], NULL);
+    
     free_dancer(dancer);
     free(sleep_data);
     return 0;

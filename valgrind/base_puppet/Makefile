@@ -15,4 +15,4 @@ libpuppet.so: $(objfiles)
 
 .PHONY: clean
 clean:
->   rm *.o libpuppet.so;
+>   rm -f *.o libpuppet.so;

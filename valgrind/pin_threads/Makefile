@@ -15,4 +15,4 @@ libpinthreads.so: $(objfiles)
 
 .PHONY: clean
 clean:
->   rm *.o libpinthreads.so;
+>   rm -f *.o libpinthreads.so;

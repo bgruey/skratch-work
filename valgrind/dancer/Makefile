@@ -3,7 +3,7 @@
 CC=/usr/bin/gcc
 CFLAGS=-g -O0 -shared -fPIC -ggdb3 -Wall
 LD=/usr/bin/ld
-LDFLAGS=-shared -fPIC
+LDFLAGS=-shared -fPIC -L../pin_threads -lpinthreads
 
 srcfiles = $(wildcard *.c)
 objfiles = $(srcfiles:.c=.o)
@@ -15,4 +15,4 @@ libdancer.so: $(objfiles)
 
 .PHONY: clean
 clean:
->   rm *.o libdancer.so;
+>   rm -f *.o libdancer.so;

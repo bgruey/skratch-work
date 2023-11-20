@@ -1,10 +1,4 @@
-#include <unistd.h>
-#include <stdlib.h>
-
 #include "dancer.h"
-#include "../base_puppet/move.h"
-#include "../base_puppet/now.h"
-#include "../pin_threads/pin_reader.h"
 
 DancerState_t* initialize_dancer(
     unsigned short num_read_pins,
@@ -12,6 +6,7 @@ DancerState_t* initialize_dancer(
     unsigned short len_buffer,
     const char* out_filename
 ) {
+    int err;
     if (num_read_pins != num_write_pins) {
         fprintf(
             stderr,
@@ -45,12 +40,37 @@ DancerState_t* initialize_dancer(
 
     dancer->start_time_seconds = get_now_seconds(dancer->now);
 
-    dancer->pin_reader_thread_data = (PinReaderThreadData_t*)calloc(1, sizeof(PinReaderThreadData_t));
+    dancer->pin_reader_thread_data = (PinThreadData_t*)calloc(1, sizeof(PinThreadData_t));
     dancer->pin_reader_thread_data->num_pins = dancer->num_read_pins;
     dancer->pin_reader_thread_data->pins = dancer->read_pins;
     dancer->pin_reader_thread_data->run_bool = (int*)calloc(1, sizeof(int));
     dancer->pin_reader_thread_data->run_bool[0] = 1;
     dancer->pin_reader_thread_data->thread = (pthread_t*)calloc(1, sizeof(pthread_t));
+
+    err = launch_pin_thread(
+        dancer->pin_reader_thread_data,
+        pin_reader
+    );
+    if (err) {
+        fprintf(stderr, "Error creating reader thread: %d", err);
+        exit(1);
+    }
+
+    dancer->pin_writer_thread_data = (PinThreadData_t*)calloc(1, sizeof(PinThreadData_t));
+    dancer->pin_writer_thread_data->num_pins = dancer->num_write_pins;
+    dancer->pin_writer_thread_data->pins = dancer->write_pins;
+    dancer->pin_writer_thread_data->run_bool = (int*)calloc(1, sizeof(int));
+    dancer->pin_writer_thread_data->run_bool[0] = 1;
+    dancer->pin_writer_thread_data->thread = (pthread_t*)calloc(1, sizeof(pthread_t));
+
+    err = launch_pin_thread(
+        dancer->pin_writer_thread_data,
+        pin_writer
+    );
+    if (err) {
+        fprintf(stderr, "Error creating reader thread: %d", err);
+        exit(1);
+    }
 
     return dancer;
 }
@@ -75,6 +95,10 @@ void free_dancer(DancerState_t* dancer) {
     free(dancer->pin_reader_thread_data->run_bool);
     free(dancer->pin_reader_thread_data->thread);
     free(dancer->pin_reader_thread_data);
+
+    free(dancer->pin_writer_thread_data->run_bool);
+    free(dancer->pin_writer_thread_data->thread);
+    free(dancer->pin_writer_thread_data);
 
     free(dancer);
 }
