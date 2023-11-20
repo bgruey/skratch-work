@@ -1,29 +1,43 @@
 # Build Puppet Program
 .RECIPEPREFIX = >
 CC=/usr/bin/gcc
-CFLAGS=-ggdb3 -Wall -I./lib
+CFLAGS=-g -O0 -ggdb3 -Wall -I./base_puppet -I./dancer -I./pin_threads
 LD=/usr/bin/ld
-LDFLAGS=-L./lib -lpuppet
+LDFLAGS=-L./base_puppet -L./dancer -L./pin_threads -lpuppet -lpinthreads -ldancer
 
 default: test
 
+test2: build
+>       LD_LIBRARY_PATH=./base_puppet:./dancer:./pin_threads gdb ./puppet.x
+
 test: build
->	LD_LIBRARY_PATH=./lib valgrind --leak-check=full \
-        --show-leak-kinds=all \
-        --verbose \
-        --log-file=valgrind-out.txt \
-        --track-origins=yes \
-        ./puppet.x
+>	LD_LIBRARY_PATH=./base_puppet:./dancer:./pin_threads \
+        valgrind --leak-check=full \
+                --show-leak-kinds=all \
+                --verbose \
+                --log-file=valgrind-out.txt \
+                --track-origins=yes \
+                --num-callers=10 \
+                ./puppet.x
 
 run: build
->	LD_LIBRARY_PATH=./lib ./puppet.x
+>	LD_LIBRARY_PATH=./base_puppet:./dancer:./pin_threads ./puppet.x
+
+build: libpuppet.so libdancer.so libpinthreads.so
+>	$(CC) $(CFLAGS) -o puppet.x main.c $(LDFLAGS)
 
 libpuppet.so:
->	$(MAKE) -C ./lib
+>	$(MAKE) -C ./base_puppet
 
-build: libpuppet.so
->	$(CC) $(CFLAGS) -o puppet.x main.c $(LDFLAGS)
+libdancer.so:
+>       $(MAKE) -C ./dancer
+
+libpinthreads.so:
+>       $(MAKE) -C ./pin_threads
 
 .PHONY: clean
 clean:
->	rm *.x
+>	rm *.x || echo "No executable to clean."
+>	$(MAKE) clean -C ./base_puppet
+>       $(MAKE) clean -C ./dancer
+>       $(MAKE) clean -C ./pin_threads

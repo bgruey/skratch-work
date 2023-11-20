@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include "../base_puppet/now.h"
 #include "../base_puppet/move.h"
+#include "../pin_threads/pin_reader.h"
 
 typedef struct {
     TimeWFloat_t* now;
@@ -22,7 +23,9 @@ typedef struct {
 
     FILE* outfile;
     char* line_buffer;
-    unsigned short len_line;  
+    unsigned short len_line;
+
+    PinReaderThreadData_t* pin_reader_thread_data;
 } DancerState_t;
 
 DancerState_t* initialize_dancer(

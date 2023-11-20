@@ -4,6 +4,7 @@
 #include "dancer.h"
 #include "../base_puppet/move.h"
 #include "../base_puppet/now.h"
+#include "../pin_threads/pin_reader.h"
 
 DancerState_t* initialize_dancer(
     unsigned short num_read_pins,
@@ -44,6 +45,13 @@ DancerState_t* initialize_dancer(
 
     dancer->start_time_seconds = get_now_seconds(dancer->now);
 
+    dancer->pin_reader_thread_data = (PinReaderThreadData_t*)calloc(1, sizeof(PinReaderThreadData_t));
+    dancer->pin_reader_thread_data->num_pins = dancer->num_read_pins;
+    dancer->pin_reader_thread_data->pins = dancer->read_pins;
+    dancer->pin_reader_thread_data->run_bool = (int*)calloc(1, sizeof(int));
+    dancer->pin_reader_thread_data->run_bool[0] = 1;
+    dancer->pin_reader_thread_data->thread = (pthread_t*)calloc(1, sizeof(pthread_t));
+
     return dancer;
 }
 
@@ -61,8 +69,39 @@ void free_dancer(DancerState_t* dancer) {
     
     free(dancer->state_buffer);
 
-    free(dancer->outfile);
+    fclose(dancer->outfile);
     free(dancer->line_buffer);
+
+    free(dancer->pin_reader_thread_data->run_bool);
+    free(dancer->pin_reader_thread_data->thread);
+    free(dancer->pin_reader_thread_data);
+
+    free(dancer);
+}
+
+
+double* get_current_state(DancerState_t* dancer) {
+    return dancer->state_buffer[dancer->buffer_i];
+}
+
+double get_current_read_pin_state(DancerState_t* dancer) {
+    return get_current_state(dancer)[1 + dancer->read_pin_i]; 
+}
+
+double get_current_read_pin_state_i(DancerState_t* dancer, unsigned short i) {
+    return get_current_state(dancer)[1 + i]; 
+}
+
+void set_current_read_pin_state(DancerState_t* dancer, double value) {
+    get_current_state(dancer)[1 + dancer->read_pin_i] = value;
+}
+
+double get_current_write_pin_state(DancerState_t* dancer) {
+    return get_current_state(dancer)[1 + dancer->num_read_pins + dancer->write_pin_i]; 
+}
+
+void set_current_write_pin_state(DancerState_t* dancer, double value) {
+    get_current_state(dancer)[1 + dancer->num_read_pins + dancer->write_pin_i] = value;
 }
 
 
@@ -81,26 +120,32 @@ void step_forward_buffer(DancerState_t* dancer) {
     );
 
     for (dancer->read_pin_i = 0; dancer->read_pin_i < dancer->num_read_pins; dancer->read_pin_i++) {
-        dancer->state_buffer[dancer->buffer_i][1 + dancer->read_pin_i]
-            = dancer->read_pins[dancer->read_pin_i];
+        set_current_read_pin_state(
+            dancer,
+            dancer->read_pins[dancer->read_pin_i]
+        );
+
         dancer->len_line += sprintf(
-            dancer->line_buffer,
+            dancer->line_buffer + dancer->len_line,
             ",%.3e",
-            dancer->state_buffer[dancer->buffer_i][1 + dancer->read_pin_i]
+            get_current_read_pin_state(dancer)
         );
     }    
 
     for (dancer->write_pin_i = 0; dancer->write_pin_i < dancer->num_write_pins; dancer->write_pin_i++) {
-        dancer->state_buffer[dancer->buffer_i][1 + dancer->num_read_pins + dancer->write_pin_i]
-            = get_move_signal(
-                dancer->state_buffer[dancer->buffer_i][1 + dancer->write_pin_i],
+        set_current_write_pin_state(
+            dancer,
+            get_move_signal(
+                get_current_read_pin_state_i(dancer, dancer->write_pin_i),
                 dancer->now,
                 dancer->move_state
-            );
+            )
+        );
+
         dancer->len_line += sprintf(
-            dancer->line_buffer,
+            dancer->line_buffer + dancer->len_line,
             ",%.3e",
-            dancer->state_buffer[dancer->buffer_i][1 + dancer->num_read_pins + dancer->read_pin_i]
+            get_current_write_pin_state(dancer)
         );
     }
 
