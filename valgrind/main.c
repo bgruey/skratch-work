@@ -17,7 +17,7 @@ int main(int argc, char** argv) {
     struct timespec* sleep_data = (struct  timespec*)calloc(1, sizeof(struct timespec));
 
     DancerState_t* dancer = initialize_dancer(
-        4, 4, 4096,
+        4, 4, 5,
         "./data.csv"
     );
 

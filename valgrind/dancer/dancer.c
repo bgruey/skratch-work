@@ -83,7 +83,11 @@ void free_dancer(DancerState_t* dancer) {
 double* get_current_state(DancerState_t* dancer) {
     return dancer->state_buffer[dancer->buffer_i];
 }
+double* get_next_state(DancerState_t* dancer) {
+    return dancer->state_buffer[dancer->next_buffer_i];
+}
 
+// Current state, used outside of main thread update routine
 double get_current_read_pin_state(DancerState_t* dancer) {
     return get_current_state(dancer)[1 + dancer->read_pin_i]; 
 }
@@ -105,10 +109,32 @@ void set_current_write_pin_state(DancerState_t* dancer, double value) {
 }
 
 
+// Next state (used for updating by main thread)
+double get_next_read_pin_state(DancerState_t* dancer) {
+    return get_next_state(dancer)[1 + dancer->read_pin_i]; 
+}
+
+double get_next_read_pin_state_i(DancerState_t* dancer, unsigned short i) {
+    return get_next_state(dancer)[1 + i]; 
+}
+
+void set_next_read_pin_state(DancerState_t* dancer, double value) {
+    get_next_state(dancer)[1 + dancer->read_pin_i] = value;
+}
+
+double get_next_write_pin_state(DancerState_t* dancer) {
+    return get_next_state(dancer)[1 + dancer->num_read_pins + dancer->write_pin_i]; 
+}
+
+void set_next_write_pin_state(DancerState_t* dancer, double value) {
+    get_next_state(dancer)[1 + dancer->num_read_pins + dancer->write_pin_i] = value;
+}
+
+
 void step_forward_buffer(DancerState_t* dancer) {
     get_now_seconds_fraction(dancer->now, 0.5);
 
-    dancer->buffer_i = (dancer->buffer_i + 1) % dancer->len_buffer;
+    dancer->next_buffer_i = (dancer->buffer_i + 1) % dancer->len_buffer;
 
     dancer->state_buffer[dancer->buffer_i][0] = dancer->now->seconds;
 
@@ -120,7 +146,7 @@ void step_forward_buffer(DancerState_t* dancer) {
     );
 
     for (dancer->read_pin_i = 0; dancer->read_pin_i < dancer->num_read_pins; dancer->read_pin_i++) {
-        set_current_read_pin_state(
+        set_next_read_pin_state(
             dancer,
             dancer->read_pins[dancer->read_pin_i]
         );
@@ -128,12 +154,12 @@ void step_forward_buffer(DancerState_t* dancer) {
         dancer->len_line += sprintf(
             dancer->line_buffer + dancer->len_line,
             ",%.3e",
-            get_current_read_pin_state(dancer)
+            get_next_read_pin_state(dancer)
         );
     }    
 
     for (dancer->write_pin_i = 0; dancer->write_pin_i < dancer->num_write_pins; dancer->write_pin_i++) {
-        set_current_write_pin_state(
+        set_next_write_pin_state(
             dancer,
             get_move_signal(
                 get_current_read_pin_state_i(dancer, dancer->write_pin_i),
@@ -145,7 +171,7 @@ void step_forward_buffer(DancerState_t* dancer) {
         dancer->len_line += sprintf(
             dancer->line_buffer + dancer->len_line,
             ",%.3e",
-            get_current_write_pin_state(dancer)
+            get_next_write_pin_state(dancer)
         );
     }
 
@@ -154,5 +180,7 @@ void step_forward_buffer(DancerState_t* dancer) {
         "%s\n",
         dancer->line_buffer
     );
+
+    dancer->buffer_i = dancer->next_buffer_i;
 
 }
