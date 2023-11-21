@@ -18,6 +18,7 @@ typedef struct {
 
 
 void* pin_reader(void* args_in);
+void* pin_reader_test(void* args_in);
 void* pin_writer(void* args_in);
 
 int launch_pin_thread(

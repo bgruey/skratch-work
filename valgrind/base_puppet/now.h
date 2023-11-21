@@ -1,10 +1,13 @@
-#define _POSIX_C_SOURCE 200809L
-#include <math.h>
-#include <time.h>
-#define TO_NS_DECIMAL 1.0e-9
-
 #ifndef NOW_H
 #define NOW_H
+
+#define _POSIX_C_SOURCE 200809L
+
+#include <math.h>
+#include <time.h>
+
+#define TO_NS_DECIMAL 1.0e-9
+
 
 typedef struct TimeWFloat_t {
     struct timespec now;

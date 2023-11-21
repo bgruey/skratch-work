@@ -46,4 +46,25 @@ void free_dancer(DancerState_t* dancer);
 
 void step_forward_buffer(DancerState_t* dancer);
 
+
+// Low level access functions
+double* get_current_state(DancerState_t* dancer);
+double* get_next_state(DancerState_t* dancer);
+
+// Current state, used outside of main thread update routine
+double get_current_read_pin_state(DancerState_t* dancer);
+double get_current_read_pin_state_i(DancerState_t* dancer, unsigned short i);
+void set_current_read_pin_state(DancerState_t* dancer, double value);
+
+double get_current_write_pin_state(DancerState_t* dancer);
+void set_current_write_pin_state(DancerState_t* dancer, double value);
+
+// Next state (used for updating by main thread)
+double get_next_read_pin_state(DancerState_t* dancer);
+double get_next_read_pin_state_i(DancerState_t* dancer, unsigned short i);
+void set_next_read_pin_state(DancerState_t* dancer, double value);
+
+double get_next_write_pin_state(DancerState_t* dancer);
+void set_next_write_pin_state(DancerState_t* dancer, double value);
+
 #endif

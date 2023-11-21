@@ -3,3 +3,4 @@ data.csv
 *.o
 *.so
 valgrind-out.txt
+*.dat

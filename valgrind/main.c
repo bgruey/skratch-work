@@ -13,7 +13,7 @@
 #include "base_puppet/sleep.h"
 
 int main(int argc, char** argv) {
-    int num_points = 300;
+    int num_points = 1200;
     struct timespec* sleep_data = (struct  timespec*)calloc(1, sizeof(struct timespec));
 
     DancerState_t* dancer = initialize_dancer(
@@ -24,7 +24,9 @@ int main(int argc, char** argv) {
     int i;
     for (i = 0; i < num_points; i++) {
         step_forward_buffer(dancer);
-        sleep_via_double(0.002, sleep_data);
+        sleep_via_double(0.0001, sleep_data);
+        if ((i % 100) == 0)
+            printf("%d: now\n", i);
     }
 
     dancer->pin_reader_thread_data->run_bool[0] = 0;

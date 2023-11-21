@@ -3,7 +3,9 @@
 
 
 double get_now_seconds(TimeWFloat_t* now) {
-    clock_gettime(CLOCK_REALTIME, &now->now);
+    // clock_gettime(CLOCK_REALTIME, &now->now);
+    clock_gettime(CLOCK_MONOTONIC, &now->now);
+
 
     now->seconds = now->now.tv_sec + now->now.tv_nsec * TO_NS_DECIMAL - now->start_time_seconds;
     return now->seconds;

@@ -10,7 +10,7 @@ default: test
 test2: build
 >       LD_LIBRARY_PATH=./base_puppet:./dancer:./pin_threads gdb ./puppet.x
 
-test: build
+test: clean build
 >	LD_LIBRARY_PATH=./base_puppet:./dancer:./pin_threads \
         valgrind --leak-check=full \
                 --show-leak-kinds=all \
