@@ -51,8 +51,8 @@ double get_timestep(FILE* kick, FILE* snare) {
 void* pin_reader_test(void* args_in) {
     PinThreadData_t* args = (PinThreadData_t*)args_in; 
 
-    FILE* kick_file = fopen("kick.dat", "rb");
-    FILE* snare_file = fopen("snare.dat", "rb");
+    FILE* kick_file = fopen("kick5k.dat", "rb");
+    FILE* snare_file = fopen("snare5k.dat", "rb");
 
     args->dt = get_timestep(kick_file, snare_file);
     double t = 0.0;

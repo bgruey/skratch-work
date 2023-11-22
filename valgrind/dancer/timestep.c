@@ -59,7 +59,7 @@ void step_forward_buffer(DancerState_t* dancer) {
     for (dancer->write_pin_i = 0; dancer->write_pin_i < dancer->num_write_pins; dancer->write_pin_i++) {
         set_next_write_pin_state(
             dancer,
-            leaky_integrator(
+            shunted_integrator(
                 get_next_read_pin_state_i(dancer, dancer->write_pin_i + 1),
                 get_current_write_pin_state(dancer),
                 dancer->pin_reader_thread_data->dt,
