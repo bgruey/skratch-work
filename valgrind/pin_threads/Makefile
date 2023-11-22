@@ -3,7 +3,7 @@
 CC=/usr/bin/gcc
 CFLAGS=-g -O0 -shared -fPIC -ggdb3 -Wall
 LD=/usr/bin/ld
-LDFLAGS=-shared -fPIC
+LDFLAGS=-shared -fPIC -L../base_puppet -lpuppet
 
 srcfiles = $(wildcard *.c)
 objfiles = $(srcfiles:.c=.o)

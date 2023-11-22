@@ -29,7 +29,7 @@ build: libpuppet.so libdancer.so libpinthreads.so
 libpuppet.so:
 >	$(MAKE) -C ./base_puppet
 
-libdancer.so: libpinthreads.so
+libdancer.so: libpinthreads.so libpuppet.so
 >       $(MAKE) -C ./dancer
 
 libpinthreads.so: libpuppet.so

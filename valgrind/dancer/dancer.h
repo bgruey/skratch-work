@@ -4,6 +4,7 @@
     Program state.
 */
 #include <stdio.h>
+#include <pthread.h>
 #include "../base_puppet/now.h"
 #include "../base_puppet/move.h"
 #include "../pin_threads/pin_thread.h"
@@ -30,6 +31,12 @@ typedef struct {
     char* line_buffer;
     unsigned short len_line;
 
+    int read_now;
+    int write_now;
+    pthread_attr_t pthread_attr;
+    pthread_mutex_t read_now_mutex;
+    pthread_cond_t read_now_cond;
+
     PinThreadData_t* pin_reader_thread_data;
     PinThreadData_t* pin_writer_thread_data;
 } DancerState_t;
@@ -42,7 +49,7 @@ DancerState_t* initialize_dancer(
     const char* out_filename
 );
 
-void free_dancer(DancerState_t* dancer);
+void destroy_dancer(DancerState_t* dancer);
 
 void step_forward_buffer(DancerState_t* dancer);
 

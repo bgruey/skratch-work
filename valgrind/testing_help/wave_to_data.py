@@ -7,9 +7,11 @@
 import librosa
 import sys
 import struct
+import seaborn as sns
+import matplotlib.pyplot as plt
 
 audio_in = sys.argv[1]
-data, sample_rate = librosa.load(audio_in, sr=None)
+data, sample_rate = librosa.load(audio_in, sr=5000)
 
 dt = 1.0 / sample_rate
 
@@ -33,18 +35,23 @@ def low_pass(x_i, y_im1, alpha):
 print("Num pts", len(data), sample_rate)
 t = 0.0
 
-def get_adc(fval):
-    return int(fval * 2 * 65535)
 
-with open("waveforms.dat", "wb") as f:
+def get_adc(fval):
+    return abs(fval)
+
+
+ofilename = "waveforms.dat" if len(sys.argv) < 2 else sys.argv[2]
+with open(ofilename, "wb") as f:
+    f.write(struct.pack("i", sample_rate))
     for d in data:
         # print(d, get_adc(d))
-        f.write(struct.pack(
-            "di", 
-            t,
-            get_adc(d)
-        ))
-        t += dt
+        f.write(struct.pack("d", get_adc(d)))
+
+ld = len(data)
+#sns.pointplot(data=data[int(ld*0.715):int(ld*0.725)])
+#sns.pointplot(data=[get_adc(e) for e in data[int(ld*0.275):int(ld*0.285)]])
+#sns.lineplot(data=data)
+plt.show()
 
 sys.exit()
 

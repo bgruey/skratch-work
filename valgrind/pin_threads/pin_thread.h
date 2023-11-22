@@ -12,8 +12,12 @@
 typedef struct {
     unsigned short num_pins;
     double* pins;
-    int* run_bool;
-    pthread_t* thread;
+    int run_bool;
+    pthread_t thread;
+    pthread_mutex_t* read_now_mutex;
+    pthread_cond_t* read_now_cond;
+    int* read_now;
+    double dt; // timestep for reader in testing.
 } PinThreadData_t;
 
 
@@ -22,6 +26,7 @@ void* pin_reader_test(void* args_in);
 void* pin_writer(void* args_in);
 
 int launch_pin_thread(
+    pthread_attr_t* attr,
     PinThreadData_t* pin_reader_thread_data,
     void* (*thread_target)(void *)
 );

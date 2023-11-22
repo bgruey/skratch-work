@@ -13,28 +13,35 @@
 #include "base_puppet/sleep.h"
 
 int main(int argc, char** argv) {
-    int num_points = 1200;
+    int num_points = 25000;
     struct timespec* sleep_data = (struct  timespec*)calloc(1, sizeof(struct timespec));
 
+    /*
+        In testing, channel definitions:
+            0: time
+            1: kick
+            2: snare
+
+        To do:
+            - Locked state at the end, need to fix that
+            - Build integrator with resistor shunt
+            - Build python plotter instead of libreoffice calc
+    */
     DancerState_t* dancer = initialize_dancer(
-        4, 4, 5,
+        3, 3, 5,
         "./data.csv"
     );
 
     int i;
     for (i = 0; i < num_points; i++) {
         step_forward_buffer(dancer);
+
         sleep_via_double(0.0001, sleep_data);
         if ((i % 100) == 0)
             printf("%d: now\n", i);
     }
-
-    dancer->pin_reader_thread_data->run_bool[0] = 0;
-    dancer->pin_writer_thread_data->run_bool[0] = 0;
-    pthread_join(dancer->pin_reader_thread_data->thread[0], NULL);
-    pthread_join(dancer->pin_writer_thread_data->thread[0], NULL);
     
-    free_dancer(dancer);
+    destroy_dancer(dancer);
     free(sleep_data);
     return 0;
 }

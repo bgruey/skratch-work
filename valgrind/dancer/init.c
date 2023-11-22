@@ -1,4 +1,39 @@
+/*
+
+    Sources:
+        - explicitly joinable, mutex: https://hpc-tutorials.llnl.gov/posix/example_using_cond_vars/
+
+*/
 #include "dancer.h"
+
+
+PinThreadData_t* init_pin_thread(
+    DancerState_t* dancer,
+    unsigned short num_pins,
+    double* pins,
+    void* (*thread_target)(void *)
+) {
+    PinThreadData_t* ret = (PinThreadData_t*)calloc(1, sizeof(PinThreadData_t));
+    ret->num_pins = num_pins;
+    ret->pins = pins;
+    ret->run_bool = 1;
+    ret->read_now = &dancer->read_now;
+    ret->read_now_mutex = &dancer->read_now_mutex;
+    ret->read_now_cond = &dancer->read_now_cond;
+
+    int err = launch_pin_thread(
+        &dancer->pthread_attr,
+        ret,
+        thread_target
+    );
+
+    if (err) {
+        fprintf(stderr, "Error creating reader thread: %d", err);
+        exit(1);
+    }
+    return ret;
+}
+
 
 DancerState_t* initialize_dancer(
     unsigned short num_read_pins,
@@ -6,11 +41,17 @@ DancerState_t* initialize_dancer(
     unsigned short len_buffer,
     const char* out_filename
 ) {
-    int err;
     if (num_read_pins != num_write_pins) {
         fprintf(
             stderr,
-            "ERROR: Mismatched number of pins. Read and write must match."
+            "ERROR: Mismatched number of pins. Read and write must match.\n"
+        );
+        exit(EXIT_FAILURE);
+    }
+    if (len_buffer < 2) {
+        fprintf(
+            stderr,
+            "ERROR: Buffer length less than 2.\n"
         );
         exit(EXIT_FAILURE);
     }
@@ -23,7 +64,7 @@ DancerState_t* initialize_dancer(
     dancer->num_write_pins = num_write_pins;
     dancer->len_buffer = len_buffer;
 
-    dancer->read_pins = (double*)calloc(num_read_pins, sizeof(double));
+    dancer->read_pins = (double*)calloc(num_read_pins + 1, sizeof(double));
     dancer->write_pins = (double*)calloc(num_write_pins, sizeof(double));
     dancer->state_buffer = (double**)calloc(len_buffer, sizeof(double*));
 
@@ -37,40 +78,28 @@ DancerState_t* initialize_dancer(
     dancer->outfile = fopen(out_filename, "w");
     dancer->line_buffer = (char*)calloc(4096, sizeof(char));
 
-
     dancer->start_time_seconds = get_now_seconds(dancer->now);
 
-    dancer->pin_reader_thread_data = (PinThreadData_t*)calloc(1, sizeof(PinThreadData_t));
-    dancer->pin_reader_thread_data->num_pins = dancer->num_read_pins;
-    dancer->pin_reader_thread_data->pins = dancer->read_pins;
-    dancer->pin_reader_thread_data->run_bool = (int*)calloc(1, sizeof(int));
-    dancer->pin_reader_thread_data->run_bool[0] = 1;
-    dancer->pin_reader_thread_data->thread = (pthread_t*)calloc(1, sizeof(pthread_t));
+    dancer->read_now = 0;
+    pthread_mutex_init(&dancer->read_now_mutex, NULL);
+    pthread_cond_init(&dancer->read_now_cond, NULL);
 
-    err = launch_pin_thread(
-        dancer->pin_reader_thread_data,
+    pthread_attr_init(&dancer->pthread_attr);
+    pthread_attr_setdetachstate(&dancer->pthread_attr, PTHREAD_CREATE_JOINABLE);
+
+    dancer->pin_reader_thread_data = init_pin_thread(
+        dancer,
+        dancer->num_read_pins,
+        dancer->read_pins,
         pin_reader_test
     );
-    if (err) {
-        fprintf(stderr, "Error creating reader thread: %d", err);
-        exit(1);
-    }
 
-    dancer->pin_writer_thread_data = (PinThreadData_t*)calloc(1, sizeof(PinThreadData_t));
-    dancer->pin_writer_thread_data->num_pins = dancer->num_write_pins;
-    dancer->pin_writer_thread_data->pins = dancer->write_pins;
-    dancer->pin_writer_thread_data->run_bool = (int*)calloc(1, sizeof(int));
-    dancer->pin_writer_thread_data->run_bool[0] = 1;
-    dancer->pin_writer_thread_data->thread = (pthread_t*)calloc(1, sizeof(pthread_t));
-
-    err = launch_pin_thread(
-        dancer->pin_writer_thread_data,
+    dancer->pin_writer_thread_data = init_pin_thread(
+        dancer,
+        dancer->num_write_pins,
+        dancer->write_pins,
         pin_writer
     );
-    if (err) {
-        fprintf(stderr, "Error creating reader thread: %d", err);
-        exit(1);
-    }
 
     return dancer;
 }

@@ -4,3 +4,5 @@ data.csv
 *.so
 valgrind-out.txt
 *.dat
+*.csv
+*.wav

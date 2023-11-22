@@ -4,63 +4,82 @@
 #include <stdio.h>
 #include "pin_thread.h"
 
-size_t read_timestamp(FILE* f, double* t, int* y) {
-    size_t nread = fread(t, sizeof(double), 1, f);
+
+size_t read_sample(
+    FILE* kick_file,
+    FILE* snare_file, 
+    double* pins,
+    double time
+) {
+    // current time
+    pins[0] = time;
+
+    // kick
+    size_t nread = fread(&pins[1], __SIZEOF_DOUBLE__, 1, kick_file);
     if (nread != 1)
         return 0;
-    return fread(y, sizeof(int), 1, f) + nread;
+
+    // snare
+    nread += fread(&pins[2], __SIZEOF_DOUBLE__, 1, snare_file);
+    if (nread != 2)
+        return 0;
+    //printf("%f: %f, %f\n", pins[0], pins[1], pins[2]);
+    return nread;
 }
+
+
+double get_timestep(FILE* kick, FILE* snare) {
+    int kick_sample_rate, snare_sameple_rate;
+    fread(&kick_sample_rate, __SIZEOF_INT__, 1, kick);
+    fread(&snare_sameple_rate, __SIZEOF_INT__, 1, snare);
+    if( kick_sample_rate != snare_sameple_rate) {
+        fprintf(
+            stderr, 
+            "ERROR: Sample rates mismatch in kick/snare (%d/%d)data!\n",
+            kick_sample_rate,
+            snare_sameple_rate
+        );
+        exit(EXIT_FAILURE);
+    }
+
+    double dt = 1.0 / ((double)kick_sample_rate);
+    printf("%f from %d, %d\n", dt, kick_sample_rate, snare_sameple_rate);
+    return dt;
+}
+
 
 void* pin_reader_test(void* args_in) {
     PinThreadData_t* args = (PinThreadData_t*)args_in; 
 
-    TimeWFloat_t* now = (TimeWFloat_t*)calloc(1, sizeof(TimeWFloat_t));
-    now->start_time_seconds = get_now_seconds(now);
-    struct timespec* sleep_data = (struct timespec*)calloc(1, sizeof(struct timespec));
+    FILE* kick_file = fopen("kick.dat", "rb");
+    FILE* snare_file = fopen("snare.dat", "rb");
 
-    FILE* waveforms = fopen("waveforms.dat", "rb");
-    double ts;
-    int y;
-    size_t num_read = 0;
+    args->dt = get_timestep(kick_file, snare_file);
+    double t = 0.0;
+    
+    size_t num_read = read_sample(kick_file, snare_file, args->pins, t);
 
-    unsigned short pin_index;
-    num_read = read_timestamp(waveforms, &ts, &y);
-    while (args->run_bool[0]) {
-            // printf(
-            //     "%f < %f --> %d\n",
-            //     ts,
-            //     get_now_seconds(now),
-            //     y
-            // );
-        // Mocking the adc, must read data until we catch up
-        while (ts < get_now_seconds(now)) {
-            num_read = read_timestamp(waveforms, &ts, &y);
-        }
+    while (args->run_bool && num_read == 2) {
+        pthread_mutex_lock(args->read_now_mutex);
 
-        if (num_read == 0) {
-            args->run_bool[0] = 0;
-            continue;
-        }
+        while(args->read_now[0] == 0)
+            pthread_cond_wait(args->read_now_cond, args->read_now_mutex);
 
-        // Mocking analog, sleep until we catchup to the quantized time series
-        if (ts > get_now_seconds(now))
-            sleep_via_double(
-                ts - now->seconds - now->start_time_seconds,
-                sleep_data
-            );
-
-        for (pin_index = 0; pin_index < args->num_pins; pin_index++)
-            args->pins[pin_index] = (double)y;
-        
-        // Pretend to be an adc, no update for this long
-        sleep_via_double(
-            0.001,  // 860 samples / s, adc limit
-            sleep_data
+        t += args->dt;
+        num_read = read_sample(
+            kick_file, 
+            snare_file, 
+            args->pins, 
+            t
         );
+
+        args->read_now[0] = 0;
+
+        pthread_mutex_unlock(args->read_now_mutex);
+        pthread_cond_signal(args->read_now_cond);
     }
 
-    free(now);
-    free(sleep_data);
-    fclose(waveforms);
+    fclose(kick_file);
+    fclose(snare_file);
     return NULL;
 }
