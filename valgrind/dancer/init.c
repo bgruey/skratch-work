@@ -64,7 +64,9 @@ DancerState_t* initialize_dancer(
     dancer->num_write_pins = num_write_pins;
     dancer->len_buffer = len_buffer;
 
-    dancer->read_pins = (double*)calloc(num_read_pins + 1, sizeof(double));
+    fprintf(stderr, "Adding additional pin to read for time, testing in init dancer.\n");
+    dancer->num_read_pins += 1;
+    dancer->read_pins = (double*)calloc(num_read_pins, sizeof(double));
     dancer->write_pins = (double*)calloc(num_write_pins, sizeof(double));
     dancer->state_buffer = (double**)calloc(len_buffer, sizeof(double*));
 

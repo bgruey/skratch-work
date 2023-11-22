@@ -1,6 +1,6 @@
 #include <math.h>
 #include "dancer.h"
-#include "low_pass_filter.h"
+#include "signal_processors.h"
 
 #define LOW_PASS_F 50.0
 #define M_PI 3.14159265358979323846
@@ -30,15 +30,16 @@ void step_forward_buffer(DancerState_t* dancer) {
     dancer->read_now = 1;
     pthread_cond_signal(&dancer->read_now_cond);
     pthread_mutex_lock(&dancer->read_now_mutex);
-    while(dancer->read_now == 1)
+    while(dancer->read_now == 1 && dancer->pin_reader_thread_data->run_bool)
         pthread_cond_wait(&dancer->read_now_cond, &dancer->read_now_mutex);
 
     dancer->line_buffer[0] = '\0';
-    dancer->len_line = sprintf(
-        dancer->line_buffer,
-        "%.5f",
-        dancer->state_buffer[dancer->buffer_i][0]
-    );
+    dancer->len_line = 0;
+    // = sprintf(
+    //     dancer->line_buffer,
+    //     "%.5f",
+    //     dancer->read_pins[0]
+    // );
 
     alpha = LOW_PASS_F * 2 * M_PI * dancer->pin_reader_thread_data->dt;
     alpha = alpha / (1.0 + alpha);
@@ -50,7 +51,7 @@ void step_forward_buffer(DancerState_t* dancer) {
 
         dancer->len_line += sprintf(
             dancer->line_buffer + dancer->len_line,
-            ",%.3e",
+            "%.13e,",
             get_next_read_pin_state(dancer)
         );
     }
@@ -58,19 +59,26 @@ void step_forward_buffer(DancerState_t* dancer) {
     for (dancer->write_pin_i = 0; dancer->write_pin_i < dancer->num_write_pins; dancer->write_pin_i++) {
         set_next_write_pin_state(
             dancer,
-            low_pass_filter(
-                get_next_read_pin_state_i(dancer, dancer->write_pin_i),
+            leaky_integrator(
+                get_next_read_pin_state_i(dancer, dancer->write_pin_i + 1),
                 get_current_write_pin_state(dancer),
-                alpha
+                dancer->pin_reader_thread_data->dt,
+                100.0  // lambda, decays to 1/e 100 times per second.
             )
+            // low_pass_filter(
+            //     get_next_read_pin_state_i(dancer, dancer->write_pin_i + 1),
+            //     get_current_write_pin_state(dancer),
+            //     alpha
+            // )
         );
 
         dancer->len_line += sprintf(
             dancer->line_buffer + dancer->len_line,
-            ",%.3e",
+            "%.5e,",
             get_next_write_pin_state(dancer)
         );
     }
+    dancer->line_buffer[dancer->len_line] = '\0';
 
     fprintf(
         dancer->outfile,

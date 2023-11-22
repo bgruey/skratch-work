@@ -62,15 +62,15 @@ void* pin_reader_test(void* args_in) {
     while (args->run_bool && num_read == 2) {
         pthread_mutex_lock(args->read_now_mutex);
 
-        while(args->read_now[0] == 0)
+        while(args->read_now[0] == 0 && args->run_bool)
             pthread_cond_wait(args->read_now_cond, args->read_now_mutex);
 
-        t += args->dt;
+
         num_read = read_sample(
             kick_file, 
             snare_file, 
             args->pins, 
-            t
+            t += args->dt
         );
 
         args->read_now[0] = 0;
@@ -79,7 +79,9 @@ void* pin_reader_test(void* args_in) {
         pthread_cond_signal(args->read_now_cond);
     }
 
+    args->run_bool = 0;
     fclose(kick_file);
     fclose(snare_file);
+
     return NULL;
 }
