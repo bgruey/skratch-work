@@ -64,11 +64,14 @@ DancerState_t* initialize_dancer(
     dancer->num_write_pins = num_write_pins;
     dancer->len_buffer = len_buffer;
 
-    fprintf(stderr, "Adding additional pin to read for time, testing in init dancer.\n");
+    fprintf(
+        stderr, 
+        "Additional pins added in dancer/init.c, ~line 69.\n"
+    );
     dancer->num_read_pins += 1;
-    dancer->read_pins = (double*)calloc(num_read_pins, sizeof(double));
-    dancer->write_pins = (double*)calloc(num_write_pins, sizeof(double));
-    dancer->state_buffer = (double**)calloc(len_buffer, sizeof(double*));
+    dancer->read_pins = (double*)calloc(dancer->num_read_pins, sizeof(double));
+    dancer->write_pins = (double*)calloc(2*dancer->num_write_pins, sizeof(double));
+    dancer->state_buffer = (double**)calloc(dancer->len_buffer, sizeof(double*));
 
     unsigned short i;
     for (i = 0; i < len_buffer; i++)
@@ -102,6 +105,15 @@ DancerState_t* initialize_dancer(
         dancer->write_pins,
         pin_writer
     );
+
+    dancer->schmidt_triggers = (SchmidtTrigger_T**)calloc(
+        dancer->num_write_pins, 
+        sizeof(SchmidtTrigger_T*)
+    );
+    for(i = 0; i < dancer->num_write_pins; i++)
+        dancer->schmidt_triggers[i] = schmtt_init(
+            0.4, 0.1, 0.4, 0.05
+        );
 
     return dancer;
 }

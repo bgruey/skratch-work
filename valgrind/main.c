@@ -13,7 +13,7 @@
 #include "base_puppet/sleep.h"
 
 int main(int argc, char** argv) {
-    //int num_points = 75001;
+    int num_points = 30000000;
     struct timespec* sleep_data = (struct  timespec*)calloc(1, sizeof(struct timespec));
 
     /*
@@ -32,8 +32,8 @@ int main(int argc, char** argv) {
         "./data.csv"
     );
 
-    int i;
-    while (dancer->pin_reader_thread_data->run_bool) {
+    int i = 0;
+    while (dancer->pin_reader_thread_data->run_bool && i < num_points) {
         step_forward_buffer(dancer);
 
         // sleep_via_double(0.0001, sleep_data);

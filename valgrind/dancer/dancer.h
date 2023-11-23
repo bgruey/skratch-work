@@ -8,6 +8,7 @@
 #include "../base_puppet/now.h"
 #include "../base_puppet/move.h"
 #include "../pin_threads/pin_thread.h"
+#include "../pin_threads/schmidt_trigger.h"
 
 typedef struct {
     TimeWFloat_t* now;
@@ -39,6 +40,8 @@ typedef struct {
 
     PinThreadData_t* pin_reader_thread_data;
     PinThreadData_t* pin_writer_thread_data;
+
+    SchmidtTrigger_T** schmidt_triggers;
 } DancerState_t;
 
 

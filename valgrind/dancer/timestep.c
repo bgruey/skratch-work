@@ -35,11 +35,6 @@ void step_forward_buffer(DancerState_t* dancer) {
 
     dancer->line_buffer[0] = '\0';
     dancer->len_line = 0;
-    // = sprintf(
-    //     dancer->line_buffer,
-    //     "%.5f",
-    //     dancer->read_pins[0]
-    // );
 
     alpha = LOW_PASS_F * 2 * M_PI * dancer->pin_reader_thread_data->dt;
     alpha = alpha / (1.0 + alpha);
@@ -57,25 +52,24 @@ void step_forward_buffer(DancerState_t* dancer) {
     }
 
     for (dancer->write_pin_i = 0; dancer->write_pin_i < dancer->num_write_pins; dancer->write_pin_i++) {
-        set_next_write_pin_state(
-            dancer,
-            shunted_integrator(
-                get_next_read_pin_state_i(dancer, dancer->write_pin_i + 1),
-                get_current_write_pin_state(dancer),
+        get_next_state(dancer)[dancer->num_read_pins + dancer->write_pin_i] = shunted_integrator(
+                get_current_state(dancer)[dancer->num_read_pins + dancer->write_pin_i],  // Current integral
+                get_next_state(dancer)[1 + dancer->write_pin_i],
                 dancer->pin_reader_thread_data->dt,
-                100.0  // lambda, decays to 1/e 100 times per second.
-            )
-            // low_pass_filter(
-            //     get_next_read_pin_state_i(dancer, dancer->write_pin_i + 1),
-            //     get_current_write_pin_state(dancer),
-            //     alpha
-            // )
+                100.0,  // lambda, decays to 1/e 100 times per second.
+                get_next_state(dancer)[0]
+        );
+
+        get_next_state(dancer)[dancer->num_read_pins + dancer->num_write_pins + dancer->write_pin_i] = schmtt_calculate(
+            get_next_state(dancer)[dancer->num_read_pins + dancer->write_pin_i],
+            dancer->schmidt_triggers[dancer->write_pin_i]
         );
 
         dancer->len_line += sprintf(
             dancer->line_buffer + dancer->len_line,
-            "%.5e,",
-            get_next_write_pin_state(dancer)
+            "%.5e,%.5e,",
+            get_next_state(dancer)[dancer->num_read_pins + dancer->write_pin_i],
+            get_next_state(dancer)[dancer->num_read_pins + dancer->num_write_pins + dancer->write_pin_i]
         );
     }
     dancer->line_buffer[dancer->len_line] = '\0';
