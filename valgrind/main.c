@@ -13,7 +13,7 @@
 #include "base_puppet/sleep.h"
 
 int main(int argc, char** argv) {
-    int num_points = 30000000;
+    int num_points = 301;
     struct timespec* sleep_data = (struct  timespec*)calloc(1, sizeof(struct timespec));
 
     /*
