@@ -19,7 +19,7 @@ spark_context = SparkContext(conf=conf)
 
 client = minio.Minio(
     access_key="admin",
-    secret_key="admin_pass",
+    secret_key="adminadmin",
     endpoint="minio-s3:9000",
     secure=False
 )

@@ -4,9 +4,21 @@
 # Docker file for job-specific builds
 FROM spark-image-base
 
+WORKDIR ${SPARK_HOME}
+
 COPY start-spark.sh /
-RUN mkdir -p "${SPARK_HOME}/jobs"
-COPY jobs/* "${SPARK_HOME}/jobs/"
+#
+RUN mkdir -p ./jobs
+COPY jobs/ ./jobs/
+
+#RUN mkdir -p ./local
+COPY local/ ./local/
+
+COPY run-tests.sh ./
+
+#RUN mkdir -p setup
+COPY setup/ setup/
+
 COPY requirements.txt ./
 RUN python -m pip install -r requirements.txt
 

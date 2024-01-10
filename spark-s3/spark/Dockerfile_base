@@ -51,7 +51,6 @@ touch $SPARK_WORKER_LOG && \
 ln -sf /dev/stdout $SPARK_MASTER_LOG && \
 ln -sf /dev/stdout $SPARK_WORKER_LOG
 
-# Python pyspark setup
-RUN python -m pip install minio==7.2.3 pyspark==3.4.2
-# Setup additional common requirements here
-#   pyspark was 300MB, so it made sense to download / install once.
+# Python requirements
+COPY requirements.txt ./
+RUN python -m pip install -r requirements.txt 

@@ -21,6 +21,7 @@ then
 elif [ "$SPARK_WORKLOAD" == "worker" ];
 then
   echo "-nfo Starting worker"
+  ./run-tests.sh
   # When the spark work_load is worker run class org.apache.spark.deploy.master.Worker
   cd /opt/spark/bin \
     && ./spark-class org.apache.spark.deploy.worker.Worker \

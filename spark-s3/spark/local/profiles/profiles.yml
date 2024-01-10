@@ -1,0 +1,10 @@
+local-testing:
+  target: local
+  outputs:
+    local:
+      type: spark
+      method: thrift
+      schema: processed
+      host: spark-brain
+      port: 7077
+      user: spark

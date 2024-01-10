@@ -13,7 +13,7 @@ services:
       - 'minio_data:/data'
     environment:
       - MINIO_ROOT_USER=admin
-      - MINIO_ROOT_PASSWORD=admin_pass
+      - MINIO_ROOT_PASSWORD=adminadmin
       - MINIO_DEFAULT_BUCKETS=default
 
   spark-brain:
@@ -38,6 +38,10 @@ services:
       - "9091:8080"
       - "7000:7000"
     environment:
+      - MINIO_ACCESS=admin
+      - MINIO_SECRET=adminadmin
+      - MINIO_HOST=minio-s3
+      - MINIO_PORT=9000
       - SPARK_MASTER=spark://spark-brain:7077
       - SPARK_WORKER_CORES=1
       - SPARK_WORKER_MEMORY=1G

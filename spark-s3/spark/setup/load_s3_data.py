@@ -4,8 +4,8 @@ from io import BytesIO
 
 client = minio.Minio(
     access_key="admin",
-    secret_key="admin_pass",
-    endpoint="127.0.0.1:9000",
+    secret_key="adminadmin",
+    endpoint="minio-s3:9000",
     secure=False
 )
 
