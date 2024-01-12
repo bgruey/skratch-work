@@ -7,17 +7,19 @@ FROM spark-image-base
 WORKDIR ${SPARK_HOME}
 
 COPY start-spark.sh /
-#
+
 RUN mkdir -p ./jobs
 COPY jobs/ ./jobs/
 
-#RUN mkdir -p ./local
 COPY local/ ./local/
 
 COPY run-tests.sh ./
 
-#RUN mkdir -p setup
 COPY setup/ setup/
+
+RUN mkdir -p /root/.aws
+COPY aws_credentials /root/.aws/credentials
+ENV AWS_PROFILE=local
 
 COPY requirements.txt ./
 RUN python -m pip install -r requirements.txt

@@ -1,3 +1,7 @@
+boto3==1.33.13
+urllib3==1.25.4
+python-dateutil==2.8
+six==1.13.0
 minio==7.2.3
 pyspark==3.4.2
 dbt-spark[PyHive]==1.5.3

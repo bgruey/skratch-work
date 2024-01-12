@@ -16,5 +16,5 @@ all: clean run
 	echo "Rebuilt all"
 
 clean:
-	docker image rm -f "${DBT_SPARK_IMAGE}"
+	# docker image rm -f "${DBT_SPARK_IMAGE}"
 	rm built

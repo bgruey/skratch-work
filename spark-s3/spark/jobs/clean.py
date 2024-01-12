@@ -1,8 +1,9 @@
 import csv
 import logging
 import time
+import pwd
 
-import minio
+import boto3
 import os
 
 from io import BytesIO
@@ -17,23 +18,20 @@ conf = SparkConf().setAppName("temp-test").setMaster(spark_master)
 spark_context = SparkContext(conf=conf)
 
 
-client = minio.Minio(
-    access_key="admin",
-    secret_key="adminadmin",
-    endpoint="minio-s3:9000",
-    secure=False
-)
+logging.error("\n\nUsername: %s\n\n---------", pwd.getpwuid(os.getuid()).pw_name)
+
+client = boto3.client("s3")
 
 r = client.get_object(
-    bucket_name="raw",
-    object_name="data-1.csv"
+    Bucket="raw",
+    Key="data-1.csv"
 )
 
-print(r.data)
+data = r['Body'].read()
+print(data)
 client.put_object(
-    bucket_name="clean",
-    object_name="cleaned-1.csv",
-    data=BytesIO(r.data),
-    length=len(r.data)
+    Bucket="clean",
+    Key="cleaned-1.csv",
+    Body=data
 )
 print("Job Success!")
