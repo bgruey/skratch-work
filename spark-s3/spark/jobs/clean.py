@@ -8,7 +8,7 @@ import os
 
 from io import BytesIO
 from pyspark import SparkContext, SparkConf
-#from pyspark.sql import SparkSession
+from pyspark.sql import SparkSession
 
 spark_master = os.getenv("SPARK_MASTER")
 
@@ -16,7 +16,8 @@ spark_master = os.getenv("SPARK_MASTER")
 
 conf = SparkConf().setAppName("temp-test").setMaster(spark_master)
 spark_context = SparkContext(conf=conf)
-
+spark_session = SparkSession(sparkContext=spark_context)
+spark_session.sql("CREATE DATABASE IF NOT EXISTS test")
 
 logging.error("\n\nUsername: %s\n\n---------", pwd.getpwuid(os.getuid()).pw_name)
 

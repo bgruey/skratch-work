@@ -9,13 +9,13 @@
 
 {{ 
     config(
-        materialized='view',
+        materialized='table',
         file_format='csv',
-        location_root="s3://minio-s3:9000/raw"
+        options={'header': 'true'},
     ) 
 }}
 
 
 
-select id, created_at, name, data
-from {{ source('source', 'data-1.csv') }}
+select *
+from {{ ref('raw_source') }}

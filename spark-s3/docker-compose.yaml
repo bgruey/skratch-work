@@ -54,6 +54,23 @@ services:
       - ./apps:/opt/spark-apps
       - ./data:/opt/spark-data
 
+  spark-thrift:
+    image: spark-image
+    depends_on:
+      - spark-worker
+    container_name: spark-thrift
+    ports:
+      - "7078:7078"
+      - "1000:10000"
+    environment:
+      - SPARK_THRIFT_PORT=7078
+      - SPARK_WORKLOAD=thrift      
+      - SPARK_MASTER=spark://spark-brain:7077
+      - MINIO_ACCESS=admin
+      - MINIO_SECRET=adminadmin
+      - MINIO_HOST=minio-s3
+      - MINIO_PORT=9000
+
 volumes:
   minio_data:
     driver: local
