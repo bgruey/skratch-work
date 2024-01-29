@@ -1,0 +1,4 @@
+librosa==0.10.1
+seaborn==0.13.0
+PyQt5==5.15.10
+scipy==1.11.4

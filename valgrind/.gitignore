@@ -1,0 +1,8 @@
+data.csv
+*.x
+*.o
+*.so
+valgrind-out.txt
+*.dat
+*.csv
+*.wav
